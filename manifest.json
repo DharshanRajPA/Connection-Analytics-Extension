@@ -1,0 +1,30 @@
+{
+"name": "Connection-Analytics-Extension",
+"version": "0.1.0",
+"description": "Analyze all the Linkedin connections and recommend the best customer client connections for product sales",
+"permissions": ["tabs", "storage"],
+"host_permissions": ["https://*.linkedin.com/*"],
+"background": {
+  "service_worker": "background.js"
+},
+"content_scripts": [
+  {
+    "matches": ["https://*.linkedin.com/*"],
+    "js": ["content.js"]
+  }
+],
+"web_accessible_resources": [
+  {
+    "resources": [
+    ],
+    "matches": ["https://*.linkedin.com/*"]
+  }
+],
+"action": {
+  "default_icon": {
+  },
+  "default_title": "Connection-Analytics-Extension",
+  "default_popup": "popup.html"
+},
+"manifest_version": 3
+}
