@@ -1,5 +1,3 @@
-/* styles.css */
-
 #follower-list-section,
 .connections-section {
     background-color: #f3f2ef;
@@ -45,7 +43,7 @@
 }
 
 .ad-banner-container {
-    display: none !important;
+    display: none ;
 }
 
 
