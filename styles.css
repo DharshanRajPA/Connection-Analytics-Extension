@@ -1,11 +1,11 @@
 #follower-list-section,
 .connections-section {
     background-color: #f3f2ef;
-    padding: 15px;
-    margin-bottom: 15px;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
     font-family: Arial, sans-serif;
+    width: 300px;
+    height: 323px;
 }
 
 #follower-list-section h2,
@@ -43,7 +43,5 @@
 }
 
 .ad-banner-container {
-    display: none ;
+    display: none;
 }
-
-

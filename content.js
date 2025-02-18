@@ -38,6 +38,57 @@
     }
   }
 
+  async function scrapeInfo() {
+    try {
+      const artDecoCard = document.querySelector('.artdeco-card');
+      const h1Tag = artDecoCard.querySelector('h1');
+      const Name = h1Tag.innerHTML;
+      const imgTag = artDecoCard.querySelectorAll('img');
+      const divTag = artDecoCard.querySelectorAll('div');
+      let ProfilePicture = null;
+      let Description = null;
+      imgTag.forEach(img => {
+        if (img.alt == Name) {
+          ProfilePicture = img;
+        }
+      });
+      const walker = document.createTreeWalker(
+        artDecoCard,
+        NodeFilter.SHOW_ELEMENT,
+        {
+          acceptNode: function (node) {
+            return NodeFilter.FILTER_ACCEPT;
+          }
+        }
+      );
+      walker.currentNode = h1Tag;
+      let foundNode = null;
+      let currentNode = null;
+      while ((currentNode = walker.nextNode())) {
+        if (
+          currentNode.tagName.toLowerCase() == 'div' &&
+          currentNode.classList.contains('text-body-medium')
+        ) {
+          foundNode = currentNode;
+          Description = currentNode;
+          break;
+        }
+      }
+      return {
+        Name: Name,
+        ProfilePicture: ProfilePicture.src,
+        Description: Description.innerHTML
+      };
+    } catch (error) {
+      console.error(error);
+      return {
+        Name: null,
+        ProfilePicture: null,
+        Description: null
+      };
+    }
+  }
+
   async function insertFollowerSection() {
     try {
       const aside = await waitForElement('.scaffold-layout__aside');
@@ -48,22 +99,62 @@
         section.className = 'artdeco-card pv-profile-card break-words mt2';
         aside.prepend(section);
       }
+      const Info = await scrapeInfo();
+      console.log(Info);
 
-      // Clear any previous content in the section
       section.innerHTML = '';
 
-      // Get the URL to your built React app's index.html
       const reactAppUrl = chrome.runtime.getURL('dist/index.html');
 
-      // Create an iframe and set its attributes
       const iframe = document.createElement('iframe');
       iframe.src = reactAppUrl;
-      iframe.style.width = '100%';
-      iframe.style.height = '600px'; // Adjust the height as needed
-      iframe.style.border = 'none';
+      iframe.style.width = '300px';
+      iframe.style.height = '323px';
+      iframe.style.border = '0px';
+      iframe.style.borderStyle = 'Solid';
+      iframe.style.borderColor = 'Gray';
+      iframe.style.borderTopLeftRadius = '8px';
+      iframe.style.borderTopRightRadius = '8px';
 
-      // Append the iframe to the section
       section.appendChild(iframe);
+      iframe.onload = function () {
+        try {
+          console.log("Sending profile data to iframe:", Info);
+          iframe.contentWindow.postMessage({ type: 'PROFILE_DATA', payload: Info }, '*');
+        } catch (error) {
+          console.error('Error extracting profile data:', error);
+        }
+      };
+
+      // Send data to the iframe using postMessage
+      //iframe.contentWindow.postMessage({ type: 'PROFILE_DATA', payload: Info }, "*");
+
+      /* window.addEventListener('message', (event) => {
+        if (event.origin != chrome.runtime.getURL('').slice(0, -1)) return; // Ensure message comes from your extension
+
+        if (event.data.type == 'REQUEST_ELEMENT') {
+          console.log('Received element request from iframe');
+
+          // Example: Send element data to the iframe
+          const someData = { message: "Hello from the parent page!" };
+          iframe.contentWindow.postMessage({ type: 'ELEMENT_DATA', payload: someData }, event.origin);
+        }
+      });
+
+       iframe.onload = function () {
+        try {
+          const iframeDoc = iframe.contentWindow.document; // Access the iframe's document
+          const ProfileName = iframeDoc.getElementById('profile-name');
+          const ProfilePicture = iframeDoc.getElementById('profile-picture');
+          const ProfileDescription = iframeDoc.getElementById('profile-description');
+          ProfileName.innerHTML = Info.Name;
+          ProfilePicture.src = Info.ProfilePicture;
+          ProfileDescription.innerHTML = Info.Description;
+        } catch (error) {
+          console.error('Error accessing iframe contents:', error);
+        }
+      };*/
+
     } catch (error) {
       console.error('Error inserting follower section:', error);
     }
