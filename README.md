@@ -1,4 +1,4 @@
-# Connection-Analytics-Extension
+# Socail-Stalker-Extension
 
 ## Analyze all the Linkedin connections and recommend the best customer client connections for product sales
 
