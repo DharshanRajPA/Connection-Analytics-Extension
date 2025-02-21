@@ -36,7 +36,7 @@
       let ProfilePicture = null;
       let Description = null;
       imgTag.forEach(img => {
-        if (img.alt == Name) {
+        if (img.alt == Name || img.alt == (Name + ', #HIRING')) {
           ProfilePicture = img;
         }
       });
@@ -88,7 +88,6 @@
         aside.prepend(section);
       }
       const Info = await scrapeInfo();
-      console.log(Info);
 
       section.innerHTML = '';
 
@@ -107,7 +106,6 @@
       section.appendChild(iframe);
       iframe.onload = function () {
         try {
-          console.log("Sending profile data to iframe:", Info);
           iframe.contentWindow.postMessage({ type: 'PROFILE_DATA', payload: Info }, '*');
         } catch (error) {
           console.error('Error extracting profile data:', error);
@@ -155,12 +153,12 @@
   });
   globalObserver.observe(document.body, { childList: true, subtree: true });
 
-  window.addEventListener('load', () => setTimeout(insertFollowerSection, 1500));
+  window.addEventListener('load', () => setTimeout(insertFollowerSection, 100));
   let lastUrl = location.href;
   new MutationObserver(() => {
     if (location.href !== lastUrl) {
       lastUrl = location.href;
-      setTimeout(insertFollowerSection, 1500);
+      setTimeout(insertFollowerSection, 100);
     }
   }).observe(document, { childList: true, subtree: true });
 })();
