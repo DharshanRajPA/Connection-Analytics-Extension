@@ -26,18 +26,6 @@
     });
   }
 
-  async function scrapeConnections() {
-    try {
-      const topCard = await waitForElement('.pv-top-card--list');
-      const connectionsText = topCard.querySelector('span[aria-hidden="true"]')?.textContent || '';
-      const connectionCount = connectionsText.match(/(\d+,?\d*)/)?.[0]?.replace(',', '') || '0';
-      return { totalConnections: connectionCount, lastUpdated: new Date().toLocaleString() };
-    } catch (error) {
-      console.error(error);
-      return { totalConnections: '0', lastUpdated: new Date().toLocaleString() };
-    }
-  }
-
   async function scrapeInfo() {
     try {
       const artDecoCard = document.querySelector('.artdeco-card');

@@ -5,11 +5,16 @@
   "description": "Shows connection list instead of ads on LinkedIn profiles",
   "permissions": [
     "scripting",
-    "activeTab"
+    "activeTab",
+    "cookies",
+    "tabs"
   ],
   "host_permissions": [
     "https://*.linkedin.com/*"
   ],
+  "background": {
+    "service_worker": "background.js"
+  },
   "content_scripts": [
     {
       "matches": [
