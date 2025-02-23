@@ -1,4 +1,5 @@
 // backgroundscript.js
+
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
@@ -21,29 +22,9 @@ function getCookie(name, url) {
     });
 }
 
-function getAllCookies(url) {
-    return new Promise((resolve) => {
-        if (!chrome.cookies) {
-            console.error("chrome.cookies API is not available in this context.");
-            resolve("");
-            return;
-        }
-        chrome.cookies.getAll({ url: url }, (cookies) => {
-            if (cookies && cookies.length) {
-                const cookieHeader = cookies.map(cookie => `${cookie.name}=${cookie.value}`).join("; ");
-                resolve(cookieHeader);
-            } else {
-                console.error("No cookies found for", url);
-                resolve("");
-            }
-        });
-    });
-}
-
-async function doAjaxCall(endpoint, token, cookieHeader) {
+async function doAjaxCall(endpoint, token) {
     console.log("doAjaxCall: Endpoint:", endpoint);
     console.log("doAjaxCall: Token:", token);
-    console.log("doAjaxCall: Cookie Header:", cookieHeader);
     try {
         const response = await fetch(endpoint, {
             method: 'GET',
@@ -51,53 +32,69 @@ async function doAjaxCall(endpoint, token, cookieHeader) {
                 'Accept': 'application/vnd.linkedin.normalized+json+2.1',
                 'Csrf-Token': token,
                 'JSESSIONID': token,
-                'Cookie': cookieHeader,
                 'X-RestLi-Protocol-Version': '2.0.0'
             }
         });
-        console.log("doAjaxCall: HTTP status", response.status);
-        if (!response.ok) {
-            console.error("Error response from endpoint:", response.status);
+        const text = await response.text();
+        if (!text.trim()) {
+            console.error("Empty response text received.");
             return null;
         }
-        const data = await response.json();
-        return data;
+        try {
+            const data = JSON.parse(text);
+            return data;
+        } catch (jsonErr) {
+            console.error("JSON parse error. Raw response:", text);
+            return null;
+        }
     } catch (err) {
         console.error("Error in doAjaxCall:", err);
         return null;
     }
 }
 
+function filterProfileData(data) {
+    if (!data) return {};
+    return {
+        entityUrn: data.included[0].entityUrn.split(':')[data.included[0].entityUrn.split(':').length - 1] || "",
+        firstName: data.included[0].firstName || "",
+        lastName: data.included[0].lastName || "",
+        premiumSubscriber: data.data.premiumSubscriber || false,
+        plainId: data.data.plainId || "",
+        trackingId: data.included[0].trackingId || "",
+        publicIdentifier: data.included[0].publicIdentifier || ""
+    };
+}
+
 async function processLinkedInProfile(profileUrl) {
-    console.log("New LinkedIn profile loaded:", profileUrl);
-    // Example URL: "https://www.linkedin.com/in/mindofkira/"
-    const parts = profileUrl.split("/");
-    const inIndex = parts.findIndex(part => part === "in");
-    if (inIndex === -1 || !parts[inIndex + 1]) {
-        console.error("Could not extract profile ID from URL:", profileUrl);
-        return;
-    }
-    const profileId = parts[inIndex + 1];
-    console.log("Extracted profile ID:", profileId);
-    // Throttle the request
+    console.log("LinkedIn page loaded:", profileUrl);
     await sleep(5000);
-    const endpoint = `https://www.linkedin.com/voyager/api/identity/profiles/${profileId}/profileView`;
+
+    const endpoint = `https://www.linkedin.com/voyager/api/me`;
     console.log("Constructed API endpoint:", endpoint);
+
     let token = await getCookie("JSESSIONID", "https://www.linkedin.com");
     token = token.replace(/"/g, '');
     if (!token) {
         console.error("Failed to retrieve JSESSIONID token. Aborting request.");
         return;
     }
-    console.log("Retrieved token:", token);
-    let cookieHeader = await getAllCookies("https://www.linkedin.com");
-    if (!cookieHeader) {
-        console.error("Failed to retrieve any cookies. Aborting request.");
-        return;
-    }
+
+    const cookieHeader = `JSESSIONID=${token}`;
     console.log("Constructed cookie header:", cookieHeader);
-    const profileData = await doAjaxCall(endpoint, token, cookieHeader);
-    console.log("Profile data received:", profileData);
+
+    const meData = await doAjaxCall(endpoint, token, cookieHeader);
+    console.log("Raw API /me data received:", meData);
+
+    const filteredData = filterProfileData(meData);
+    console.log("Filtered Profile Data:", filteredData);
+
+    if (chrome.storage.local.profileData != filteredData) {
+        chrome.storage.local.set({ profileData: filteredData }, () => {
+            console.log("Profile data stored in chrome.storage.local");
+        })
+    }
+
 }
 
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
