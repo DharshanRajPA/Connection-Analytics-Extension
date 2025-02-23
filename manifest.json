@@ -7,7 +7,8 @@
     "scripting",
     "activeTab",
     "cookies",
-    "tabs"
+    "tabs",
+    "https://www.linkedin.com/*"
   ],
   "host_permissions": [
     "https://*.linkedin.com/*"
